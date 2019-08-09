@@ -2,7 +2,7 @@ from asyncio import wait
 from random import randint
 from os import environ
 
-from discord import Embed, Colour, Message, Member, TextChannel, VoiceChannel
+from discord import Embed, Colour, Member, TextChannel, VoiceChannel
 from discord.ext import commands
 
 command_prefix = '>'
@@ -11,7 +11,7 @@ command_prefix = '>'
 class TRPGCog(commands.Cog):
     object_id = 115
     
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
         
     @commands.command(name='초대링크', brief='봇을 초대하기 위한 링크를 확인합니다.')
@@ -191,7 +191,7 @@ class TRPGCog(commands.Cog):
         await text_channel.send(embed=embed)
         self.object_id += 1
         
-    @commands.command(name='화면공유', aliases=('화공', 'ㅎ', 'g', 'G', '화면', '공유', 'screen'),
+    @commands.command(name='화면공유', aliases=('화공', 'ㅎ', 'g', '화면', '공유', 'screen'),
                       brief='화면공유 링크를 확인합니다.',
                       help='음성 채널의 화면공유를 활성화하는 링크를 확인합니다.\n'
                            '사용법은 다음과 같습니다.\n'
@@ -207,7 +207,7 @@ class TRPGCog(commands.Cog):
         if voice_channel is None and ctx.author.voice is not None and ctx.author.voice.channel is not None:
             voice_channel = ctx.author.voice.channel
         if voice_channel is None:
-            await ctx.send(f'{ctx.author.mention} 화면공유를 활성화할 채널을 지정해주세요.')
+            await ctx.send('화면공유를 활성화할 채널을 지정해야 합니다.')
             return
         url = f'https://discordapp.com/channels/{ctx.guild.id}/{voice_channel.id}'
         embed = Embed(title=f':desktop: **{ctx.guild}/{voice_channel}**', colour=Colour.blurple(),
