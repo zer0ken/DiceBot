@@ -5,5 +5,5 @@
 discord.py==1.2.3
 
 ## 개발자
-twitter `_zer0ken_`  
+twitter `@_zer0ken_`  
 discord `zer0ken#6146`
