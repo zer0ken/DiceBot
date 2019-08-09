@@ -1,1 +1,1 @@
-worker: python trpg_bot.py
+worker: python dice_bot.py
