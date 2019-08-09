@@ -1,6 +1,7 @@
 from random import randint
+from os import *
 
-from discord import Embed, Colour, Message, Member
+from discord import Embed, Colour, Message
 from discord.ext import commands
 
 
@@ -151,5 +152,6 @@ class TRPGCog(commands.Cog):
 bot = commands.Bot(command_prefix=command_prefix, help_command=None, case_insensitive=True)
 bot.add_cog(TRPGCog(bot))
 
-bot_token = ''
+
+bot_token = environ["BOT_TOKEN"]
 bot.run(bot_token)
