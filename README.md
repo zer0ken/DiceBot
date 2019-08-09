@@ -9,7 +9,7 @@ twitter `@_zer0ken_`
 discord `zer0ken#6146`
 
 ## 기능
-* 주사위
+* 주사위  
   주사위를 굴립니다
 * 안녕
   
