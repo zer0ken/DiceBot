@@ -1,36 +1,37 @@
+from asyncio import wait
 from random import randint
-from os import *
+from os import environ
 
-from discord import Embed, Colour, Message
+from discord import Embed, Colour, Message, Member, TextChannel, VoiceChannel
 from discord.ext import commands
 
-
 command_prefix = '..'
-object_id = 541
 
 
 class TRPGCog(commands.Cog):
+    object_id = 115
+    
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
         self.private_rooms: dict = {}
-        
+    
     @commands.Cog.listener()
     async def on_ready(self):
         print('ready.')
-        
+    
     @commands.Cog.listener()
     async def on_message(self, msg: Message):
         print(msg.author, msg.content)
-        
+    
     @commands.command(name='도움말', aliases=('도움', 'h', 'help'), brief=f'명령어의 도움말을 확인합니다.',
                       help='명령어의 도움말을 확인합니다.\n'
                            '사용법은 다음과 같습니다.\n'
                            '```\n'
-                           f'{command_prefix}도움말 굴림\n'
-                           f'{command_prefix}도움말 명령어\n'
-                           f'{command_prefix}도움말 비밀방\n'
+                      f'{command_prefix}도움말 굴림\n'
+                      f'{command_prefix}도움말 명령어\n'
+                      f'{command_prefix}도움말 비밀방\n'
                            '```\n'
-                           f'봇이 어떤 기능을 제공하는지 알고 싶다면 "{command_prefix}명령어" 명령어를 사용해보세요.')
+                      f'봇이 어떤 기능을 제공하는지 알고 싶다면 "{command_prefix}명령어" 명령어를 사용해보세요.')
     async def h(self, ctx: commands.Context, *tokens: str):
         cmd: commands.Bot = self.bot
         if tokens:
@@ -43,10 +44,10 @@ class TRPGCog(commands.Cog):
         else:
             cmd: commands.Command = self.h
         if cmd is None:
-            await ctx.send(f'"{" ".join(tokens)}" 명령어를 찾을 수 없어!')
+            await ctx.send(f'"{" ".join(tokens)}" 명령어를 찾을 수 없습니다.')
             return
         help_embed = Embed(title=f'**{self.bot.command_prefix}'
-                           f'{cmd.full_parent_name + " " if cmd.full_parent_name else ""}{cmd.name}**',
+        f'{cmd.full_parent_name + " " if cmd.full_parent_name else ""}{cmd.name}**',
                            description=cmd.brief, colour=Colour.blurple())
         help_embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         help_embed.set_thumbnail(url=self.bot.user.avatar_url)
@@ -62,8 +63,8 @@ class TRPGCog(commands.Cog):
             value += '```'
             help_embed.add_field(name=':diamond_shape_with_a_dot_inside: 하위 명령어', value=value)
         await ctx.send(embed=help_embed)
-
-    @commands.command(name='명령어', aliases=('cmd', '커맨드', '커멘드'), brief='봇 명령어 목록을 조회합니다.',
+    
+    @commands.command(name='명령어', aliases=('cmd', '커맨드', '커멘드', 'cmds'), brief='봇 명령어 목록을 조회합니다.',
                       help='봇이 제공하는 명령어들의 목록을 조회합니다.')
     async def cmd(self, ctx: commands.Context):
         cmds = [f'명령어 목록입니다.\n{"-" * 40}\n']
@@ -93,11 +94,11 @@ class TRPGCog(commands.Cog):
                       help='주사위를 굴립니다.\n'
                            '사용법은 다음과 같습니다.\n'
                            '```\n'
-                           f'{command_prefix}굴림 D%\n'
-                           f'{command_prefix}굴림 10D + 5\n'
-                           f'{command_prefix}굴림 10 + 2D20 + 4 + 11 + 4D\n'
-                           f'```\n'
-                           f'굴림 기능은 덧셈을 지원하지만 뺄셈은 지원하지 않습니다.\n')
+                      f'{command_prefix}굴림 D%\n'
+                      f'{command_prefix}굴림 10D + 5\n'
+                      f'{command_prefix}굴림 10 + 2D20 + 4 + 11 + 4D\n'
+                      f'```\n'
+                      f'굴림 기능은 덧셈을 지원하지만 뺄셈은 지원하지 않습니다.\n')
     async def r(self, ctx: commands.Context, *, roll: str):
         print('detected')
         parts = []
@@ -147,11 +148,31 @@ class TRPGCog(commands.Cog):
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         await ctx.send(ctx.author.mention, embed=embed)
-        
+    
+    @commands.group(name='개인방', aliases=('pc', 'pr', 'private', '비밀방'), invoke_without_command=True,
+                    brief='개인방을 만듭니다.',
+                    help='특정 멤버만 볼 수 있는 텍스트/음성 채널을 만듭니다.\n'
+                         '사용법은 다음과 같습니다.\n'
+                         '[멤버]')
+    async def private(self, ctx: commands.Context, *members: Member):
+        msg = await ctx.send(f'{ctx.author.mention} 개인방을 만들고 있습니다...')
+        text_channel: TextChannel = await ctx.guild.create_text_channel(f'개인방 {self.object_id}호실')
+        voice_channel: VoiceChannel = await ctx.guild.create_voice_channel(f'개인방 {self.object_id}호실')
+        tasks = [text_channel.set_permissions(ctx.guild.default_role, read_messages=False),
+                 voice_channel.set_permissions(ctx.guild.default_role, read_messages=False),
+                 text_channel.set_permissions(ctx.author, read_messages=True),
+                 voice_channel.set_permissions(ctx.author, read_messages=True)]
+        for member in members:
+            tasks.extend([text_channel.set_permissions(member, read_messages=True),
+                          voice_channel.set_permissions(member, read_messages=True)])
+        await wait(tasks)
+        await msg.edit(content=f'{ctx.author.mention} 개인방을 만들었습니다.')
+        self.private_rooms[ctx.guild.id][self.object_id] = {'text': text_channel.id, 'voice': voice_channel.id}
+        self.object_id += 1
+
 
 bot = commands.Bot(command_prefix=command_prefix, help_command=None, case_insensitive=True)
 bot.add_cog(TRPGCog(bot))
-
 
 bot_token = environ["BOT_TOKEN"]
 bot.run(bot_token)
