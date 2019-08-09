@@ -167,6 +167,8 @@ class TRPGCog(commands.Cog):
                           voice_channel.set_permissions(member, read_messages=True)])
         await wait(tasks)
         await msg.edit(content=f'{ctx.author.mention} 개인방을 만들었습니다.')
+        if ctx.guild.id not in self.private_rooms:
+            self.private_rooms[ctx.guild.id] = {}
         self.private_rooms[ctx.guild.id][self.object_id] = {'text': text_channel.id, 'voice': voice_channel.id}
         self.object_id += 1
 
