@@ -35,7 +35,7 @@ class TRPGCog(commands.Cog):
     @commands.command(name='초대링크', brief='봇을 초대하기 위한 링크를 확인합니다.',
                       help='봇을 서버에 초대하기 위해 필요한 링크를 확인합니다.')
     async def invite_link(self, ctx: commands.Context):
-        url = 'https://discordapp.com/api/oauth2/authorize?client_id=609223331945906186&permissions=16788560&scope=bot'
+        url = 'https://discordbots.org/bot/609223331945906186'
         embed = Embed(title=':link: 봇 초대 링크', colour=Colour.blurple(),
                       description=f'봇을 다른 서버에 초대하려면 **[여기]({url})**를 클릭하세요.')
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
