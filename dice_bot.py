@@ -1,10 +1,29 @@
 from random import randint
 from os import environ
 
+from asyncio import sleep
+
+from dbl import Client
 from discord import Embed, Colour, Member, TextChannel, VoiceChannel, PermissionOverwrite
 from discord.ext import commands
 
 command_prefix = '>>'
+
+
+class DiscordBotsOrgAPI(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot: commands.Bot = bot
+        self.token: str = environ["DBL_TOKEN"]
+        self.dblpy: Client = Client(self.bot, self.token)
+        self.updating = self.bot.loop.create_task(self.update_stats())
+
+    async def update_stats(self):
+        while not self.bot.is_closed():
+            try:
+                await self.dblpy.post_guild_count()
+            except Exception as e:
+                pass
+            await sleep(1800)
 
 
 class TRPGCog(commands.Cog):
@@ -215,6 +234,7 @@ class TRPGCog(commands.Cog):
 
 bot = commands.Bot(command_prefix=command_prefix, help_command=None, case_insensitive=True)
 bot.add_cog(TRPGCog(bot))
+bot.add_cog(DiscordBotsOrgAPI(bot))
 
 bot_token = environ["BOT_TOKEN"]
 bot.run(bot_token)
