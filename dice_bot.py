@@ -29,10 +29,10 @@ class TRPGCog(commands.Cog):
                            '```\n'
                            f'{command_prefix}도움말 굴림\n'
                            f'{command_prefix}도움말 명령어\n'
-                           f'{command_prefix}도움말 비밀방\n'
+                           f'{command_prefix}도움말 개인방\n'
                            '```\n'
-                           f'봇이 어떤 기능을 제공하는지 알고 싶다면 "{command_prefix}명령어" 명령어를 사용해보세요.')
-    async def h(self, ctx: commands.Context, *tokens: str):
+                           f'봇이 어떤 명령어를 제공하는지 알고 싶다면 "{command_prefix}명령어" 명령어를 사용해보세요.')
+    async def help(self, ctx: commands.Context, *tokens: str):
         cmd: commands.Bot = self.bot
         if tokens:
             for token in tokens:
@@ -42,7 +42,7 @@ class TRPGCog(commands.Cog):
                     break
                 cmd: commands.Command = inner_cmd
         else:
-            cmd: commands.Command = self.h
+            cmd: commands.Command = self.help
         if cmd is None:
             await ctx.send(f'"{" ".join(tokens)}" 명령어를 찾을 수 없습니다.')
             return
@@ -102,7 +102,7 @@ class TRPGCog(commands.Cog):
                            f'{command_prefix}굴림 10 + 2D20 + 4 + 11 + 4D\n'
                            '```\n'
                            '굴림 기능은 덧셈을 계산하지만 뺄셈은 계산하지 않습니다.\n')
-    async def r(self, ctx: commands.Context, *, roll: str = 'D'):
+    async def roll(self, ctx: commands.Context, *, roll: str = 'D'):
         parts = []
         if '+' in roll:
             for part in roll.split('+'):
