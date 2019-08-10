@@ -1,9 +1,7 @@
 # DiceBot
 주사위 등의 TRPG 보조 기능이 포함된 봇입니다.
 
-<a href="https://discordbots.org/bot/609223331945906186" >
-  <img src="https://discordbots.org/api/widget/609223331945906186.svg" alt="주사위봇" />
-</a>
+[![Discord Bots](https://discordbots.org/api/widget/609223331945906186.svg)](https://discordbots.org/bot/609223331945906186)
 
 ## 외부 라이브러리
 ```
