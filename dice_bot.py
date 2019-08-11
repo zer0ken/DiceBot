@@ -118,9 +118,8 @@ class TRPGCog(commands.Cog):
                            '[복잡한 주사위 굴림]\n'
                            f'{command_prefix}굴림 D%\n'
                            f'{command_prefix}굴림 10D + 5\n'
-                           f'{command_prefix}굴림 10 + 2D20 + 4 + 11 + 4D\n'
-                           '```\n'
-                           '굴림 기능은 덧셈을 계산하지만 뺄셈은 계산하지 않습니다.\n')
+                           f'{command_prefix}굴림 10 + 2D20 + 4 - 11 - 4D\n'
+                           '```')
     async def roll(self, ctx: commands.Context, *, roll: str = 'D'):
         parts = []
         if '+' in roll or '-' in roll:
