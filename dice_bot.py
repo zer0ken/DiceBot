@@ -123,14 +123,25 @@ class TRPGCog(commands.Cog):
                            '굴림 기능은 덧셈을 계산하지만 뺄셈은 계산하지 않습니다.\n')
     async def roll(self, ctx: commands.Context, *, roll: str = 'D'):
         parts = []
-        if '+' in roll:
+        if '+' in roll or '-' in roll:
             for part in roll.split('+'):
-                part.strip()
-                if not part:
+                if not part.strip():
                     continue
-                parts.append({'raw': part.strip().upper(), 'process': None, 'result': None})
+                if '-' in roll:
+                    for i in range(len(part.split('-'))):
+                        parts_ = part.split('-')
+                        if not parts_[i].strip():
+                            continue
+                        part_dict = {'raw': parts_[i].strip().upper(), 'sign': '-', 'process': None, 'result': None}
+                        if i:
+                            part_dict['sign'] = '-'
+                        else:
+                            part_dict['sign'] = '+'
+                        parts.append(part_dict)
+                else:
+                    parts.append({'raw': part.strip().upper(), 'sign': '+', 'process': None, 'result': None})
         else:
-            parts.append({'raw': roll.strip().upper(), 'process': None, 'result': None})
+            parts.append({'raw': roll.strip().upper(), 'sign': '+', 'process': None, 'result': None})
         for part in parts:
             part['raw'] = part['raw'].replace(' ', '', part['raw'].count(' '))
             if 'D' in part['raw']:
@@ -150,17 +161,22 @@ class TRPGCog(commands.Cog):
                 throwns = []
                 for i in range(dices):
                     throwns.append(randint(1, pips))
-                part['process'] = f'[{" +".join(str(thrown) for thrown in throwns)}]'
-                part['result'] = sum(throwns)
+                part['process'] = str(throwns)
+                part['result'] = sum(throwns) * (-1 if part['sign'] == '-' else 1)
             else:
                 part['process'] = part['raw']
                 try:
-                    part['result'] = int(part['raw'])
+                    part['result'] = int(part['raw']) * (-1 if part['sign'] == '-' else 1)
                 except ValueError:
                     await ctx.send('더하는 값을 정확한 숫자로 입력해주세요.')
                     return
-        description = '**' + (" + ".join(part['raw'] for part in parts)) + '**'
-        description += '\n= ' + " + ".join(part['process'] for part in parts)
+        raw_description = ''
+        process_description = ''
+        for part in parts:
+            raw_description += f'{part["sign"]} {part["raw"]} '
+            process_description += f'{part["sign"]} {part["process"]} '
+        description = '**' + raw_description + '**'
+        description += '\n= ' + process_description
         description += '\n= ***__' + str(sum(part['result'] for part in parts)) + '__***'
         embed = Embed(title=':game_die: 주사위 굴림', description=description, colour=Colour.blurple())
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
