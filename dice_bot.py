@@ -11,27 +11,13 @@ from discord.ext import commands
 command_prefix = '>>'
 
 
-class DiscordBotsOrgAPI(commands.Cog):
-    def __init__(self, client: commands.Bot):
-        self.client: commands.Bot = client
-        self.token: str = config('DBL_TOKEN')
-        self.dblpy: DBLClient = DBLClient(self.client, self.token)
-        self.updating = self.client.loop.create_task(self.update_stats())
-
-    async def update_stats(self):
-        while not self.client.is_closed():
-            try:
-                await self.dblpy.post_guild_count()
-            except Exception as e:
-                pass
-            await sleep(1800)
-
-
 class TRPGCog(commands.Cog):
     object_id = 115
     
     def __init__(self, client: commands.Bot):
         self.client: commands.Bot = client
+        self.dbl_token = config('DBL_TOKEN')
+        self.dblpy = DBLClient(client, self.dbl_token, autopost=True)
         
     @commands.command(name='초대링크', brief='봇을 초대하기 위한 링크를 확인합니다.',
                       help='봇을 서버에 초대하기 위해 필요한 링크를 확인합니다.')
