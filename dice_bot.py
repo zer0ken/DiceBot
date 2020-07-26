@@ -215,7 +215,6 @@ class TRPGCog(commands.Cog):
 
 bot = commands.Bot(command_prefix=command_prefix, help_command=None, case_insensitive=True)
 bot.add_cog(TRPGCog(bot))
-bot.add_cog(DiscordBotsOrgAPI(bot))
 
 bot_token = config("BOT_TOKEN")
 bot.run(bot_token)
