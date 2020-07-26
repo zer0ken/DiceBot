@@ -1,5 +1,5 @@
 # DiceBot
-주사위 등의 TRPG 보조 기능이 포함된 봇입니다.
+주사위 등의 TRPG 보조 기능이 포함된 봇입니다. 명령어 `>>굴림 2D + 1`을 입력해서 기능을 시험해보세요. 명령어의 종류는 `>>명령어`로, 도움말은 `>>도움말 <명령어>`로 확인할 수 있습니다.
 
 [![Discord Bots](https://discordbots.org/api/widget/609223331945906186.svg)](https://discordbots.org/bot/609223331945906186)
 
