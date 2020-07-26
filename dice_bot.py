@@ -3,7 +3,8 @@ from os import environ
 
 from asyncio import sleep
 
-from dbl import Client
+from dbl.client import DBLClient
+from decouple import config
 from discord import Embed, Colour, Member, TextChannel, VoiceChannel, PermissionOverwrite
 from discord.ext import commands
 
@@ -13,8 +14,8 @@ command_prefix = '>>'
 class DiscordBotsOrgAPI(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
-        self.token: str = environ["DBL_TOKEN"]
-        self.dblpy: Client = Client(self.bot, self.token)
+        self.token: str = config('DBL_TOKEN')
+        self.dblpy: DBLClient = DBLClient(self.bot, self.token)
         self.updating = self.bot.loop.create_task(self.update_stats())
 
     async def update_stats(self):
@@ -70,9 +71,10 @@ class TRPGCog(commands.Cog):
                            description=cmd.brief, colour=Colour.blurple())
         help_embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         help_embed.set_thumbnail(url=self.bot.user.avatar_url)
-        help_embed.add_field(name=':gear: 기능', value=cmd.help)
+        help_embed.add_field(name=':gear: 기능', value=cmd.help, inline=False)
         if cmd.aliases:
-            help_embed.add_field(name=':asterisk: 대체 가능한 단어', value=', '.join([f'"{a}"' for a in cmd.aliases]))
+            help_embed.add_field(name=':asterisk: 대체 가능한 단어', value=', '.join([f'"{a}"' for a in cmd.aliases]),
+                                 inline=False)
         if isinstance(cmd, commands.Group):
             value = '이 명령어는 다음의 하위 명령어를 포함하고 있습니다.\n```\n'
             for subcommand in cmd.commands:
@@ -80,7 +82,7 @@ class TRPGCog(commands.Cog):
                 value += f'{subcommand.full_parent_name + " " if subcommand.full_parent_name else ""}'
                 value += f'{subcommand.name}\n'
             value += '```'
-            help_embed.add_field(name=':diamond_shape_with_a_dot_inside: 하위 명령어', value=value)
+            help_embed.add_field(name=':diamond_shape_with_a_dot_inside: 하위 명령어', value=value, inline=False)
         await ctx.send(embed=help_embed)
     
     @commands.command(name='명령어', aliases=('cmd', '커맨드', '커멘드', 'cmds'), brief='봇 명령어 목록을 조회합니다.',
@@ -88,8 +90,8 @@ class TRPGCog(commands.Cog):
     async def cmd(self, ctx: commands.Context):
         cmds = [f'명령어 목록입니다.\n{"-" * 40}\n']
         for cmd in self.bot.commands:
-            cmd_brief = f'║ **{self.bot.command_prefix}{f" {cmd.full_parent_name} " if cmd.full_parent_name else ""}'
-            cmd_brief += f'{cmd.name}**\n║ -- *{cmd.brief}*\n\n'
+            cmd_brief = f'**{self.bot.command_prefix}{f" {cmd.full_parent_name} " if cmd.full_parent_name else ""}'
+            cmd_brief += f'{cmd.name}**\n-- *{cmd.brief}*\n\n'
             if len(cmds) == 1 and len(cmds[-1] + cmd_brief) > 2048:
                 cmds.append(cmd_brief)
             elif len(cmds[-1] + cmd_brief) > 1024:
@@ -101,7 +103,7 @@ class TRPGCog(commands.Cog):
         cmd_embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         embeds = [cmd_embed]
         for cmd_brief in cmds:
-            embeds[-1].add_field(name='-', value=cmd_brief)
+            embeds[-1].add_field(name='-', value=cmd_brief, inline=False)
             if len(embeds[-1]) > 6000 or len(embeds[-1].fields) > 25:
                 embeds[-1].remove_field(-1)
                 embeds.append(Embed(colour=Colour.blurple()))
@@ -109,7 +111,7 @@ class TRPGCog(commands.Cog):
         for embed in embeds:
             await ctx.send(ctx.author.mention, embed=embed)
     
-    @commands.command(name='굴림', aliases=('주사위', '굴리기', 'r', 'roll'), brief='주사위를 굴립니다.',
+    @commands.command(name='굴림', aliases=('주사위', '굴리기', 'r', 'roll', '굴'), brief='주사위를 굴립니다.',
                       help='주사위를 굴립니다.\n'
                            '사용법은 다음과 같습니다.\n'
                            '```\n'
@@ -192,64 +194,42 @@ class TRPGCog(commands.Cog):
                            f'{command_prefix}개인방 @secondUser#5678 @andThird#9012 @fourth#3456\n'
                            f'{command_prefix}개인방 secondUser andThird fourth'
                            '```\n'
-                           ' 참여하는 멤버를 `@userName#1234` 형식으로 언급할 수 없다면 '
-                           '`userName` 형식으로 이름만 입력해도 됩니다.')
+                           ' 참여하는 멤버를 `@이름#0000`와 같이 언급할 수 없다면 '
+                           '`이름`과 같이 이름만 입력해도 됩니다.')
     async def private_room(self, ctx: commands.Context, member: Member, *members: Member):
         msg = await ctx.send(f'{ctx.author.mention} 개인방을 만들고 있습니다...')
-        overwrites = {ctx.guild.default_role: PermissionOverwrite(read_messages=False),
-                      self.bot.user: PermissionOverwrite(read_messages=True)}
-        members = list(members)
-        members.append(member)
-        for member in members:
-            overwrites[member] = PermissionOverwrite(read_messages=True)
-        text_channel: TextChannel = await ctx.guild.create_text_channel(f'개인방 {self.object_id}호실',
-                                                                        overwrites=overwrites)
-        voice_channel: VoiceChannel = await ctx.guild.create_voice_channel(f'개인방 {self.object_id}호실',
-                                                                           overwrites=overwrites)
-        text_url = f'https://discordapp.com/channels/{ctx.guild.id}/{text_channel.id}'
-        voice_url = f'https://discordapp.com/channels/{ctx.guild.id}/{voice_channel.id}'
-        embed = Embed(title=':spy: 개인방 개설', colour=Colour.blurple(), description='개인방을 개설했습니다.')
-        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-        embed.set_thumbnail(url=ctx.guild.icon_url)
-        embed.add_field(name=':busts_in_silhouette: 멤버', inline=False,
-                        value=f':small_orange_diamond: {ctx.author}\n:small_blue_diamond: ' +
-                              ('\n:small_blue_diamond: '.join(str(member) for member in members)))
-        embed.add_field(name=':envelope: 텍스트 채널', value=f'텍스트 채널을 보려면 **[여기]({text_url})**를 클릭하세요.')
-        embed.add_field(name=':loud_sound: 음성 채널 (화면공유)',
-                        value=f'음성 채널에서 화면공유를 활성화하려면 **[여기]({voice_url})**를 클릭하세요.')
-        await msg.edit(content=f'{ctx.author.mention} 개인방을 만들었습니다.', embed=embed)
-        await text_channel.send(embed=embed)
-        self.object_id += 1
-        
-    @commands.command(name='화면공유', aliases=('화공', 'ㅎ', 'g', '화면', '공유', 'screen'),
-                      brief='화면공유 링크를 확인합니다.',
-                      help='음성 채널의 화면공유를 활성화하는 링크를 확인합니다.\n'
-                           '사용법은 다음과 같습니다.\n'
-                           '```\n'
-                           '[현재 연결된 음성 채널에서 화면공유]\n'
-                           f'{command_prefix}화면공유\n\n'
-                           '[특정 음성 채널에서 화면공유]\n'
-                           f'{command_prefix}화면공유 통화3\n'
-                           f'{command_prefix}화면공유 559653353890643972\n'
-                           '```\n'
-                           '음성 채널을 지정할 때에는 음성 채널의 이름이나 ID를 명령어 뒤에 입력하면 됩니다.')
-    async def screen_share(self, ctx: commands.Context, *, voice_channel: VoiceChannel = None):
-        if voice_channel is None and ctx.author.voice is not None and ctx.author.voice.channel is not None:
-            voice_channel = ctx.author.voice.channel
-        if voice_channel is None:
-            await ctx.send('화면공유를 활성화할 채널을 지정해야 합니다.')
-            return
-        url = f'https://discordapp.com/channels/{ctx.guild.id}/{voice_channel.id}'
-        embed = Embed(title=f':desktop: **{ctx.guild}/{voice_channel}**', colour=Colour.blurple(),
-                      description=f'화면공유를 활성화하려면 **[여기]({url})**를 클릭하세요.')
-        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-        embed.set_thumbnail(url=ctx.guild.icon_url)
-        await ctx.send(ctx.author.mention, embed=embed)
+        try:
+            overwrites = {ctx.guild.default_role: PermissionOverwrite(read_messages=False),
+                          self.bot.user: PermissionOverwrite(read_messages=True)}
+            members = list(members)
+            members.append(member)
+            for member in members:
+                overwrites[member] = PermissionOverwrite(read_messages=True)
+            text_channel: TextChannel = await ctx.guild.create_text_channel(f'개인방 {self.object_id}호실',
+                                                                            overwrites=overwrites)
+            voice_channel: VoiceChannel = await ctx.guild.create_voice_channel(f'개인방 {self.object_id}호실',
+                                                                               overwrites=overwrites)
+            text_url = f'https://discordapp.com/channels/{ctx.guild.id}/{text_channel.id}'
+            voice_url = f'https://discordapp.com/channels/{ctx.guild.id}/{voice_channel.id}'
+            embed = Embed(title=':spy: 개인방 개설', colour=Colour.blurple(), description='개인방을 개설했습니다.')
+            embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.add_field(name=':busts_in_silhouette: 멤버', inline=False,
+                            value=f':small_orange_diamond: {ctx.author}\n:small_blue_diamond: ' +
+                                  ('\n:small_blue_diamond: '.join(str(member) for member in members)))
+            embed.add_field(name=':envelope: 텍스트 채널', value=f'텍스트 채널을 보려면 **[여기]({text_url})**를 클릭하세요.')
+            embed.add_field(name=':loud_sound: 음성 채널 (화면공유)',
+                            value=f'음성 채널에서 화면공유를 활성화하려면 **[여기]({voice_url})**를 클릭하세요.')
+            await msg.edit(content=f'{ctx.author.mention} 개인방을 만들었습니다.', embed=embed)
+            await text_channel.send(embed=embed)
+            self.object_id += 1
+        except BaseException as e:
+            await msg.edit(content=f'개인방을 만들 수 없습니다...```\n{e}\n```')
 
 
 bot = commands.Bot(command_prefix=command_prefix, help_command=None, case_insensitive=True)
 bot.add_cog(TRPGCog(bot))
 bot.add_cog(DiscordBotsOrgAPI(bot))
 
-bot_token = environ["BOT_TOKEN"]
+bot_token = config("BOT_TOKEN")
 bot.run(bot_token)
