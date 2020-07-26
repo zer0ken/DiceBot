@@ -12,14 +12,14 @@ command_prefix = '>>'
 
 
 class DiscordBotsOrgAPI(commands.Cog):
-    def __init__(self, bot: commands.Bot):
-        self.bot: commands.Bot = bot
+    def __init__(self, client: commands.Bot):
+        self.client: commands.Bot = client
         self.token: str = config('DBL_TOKEN')
-        self.dblpy: DBLClient = DBLClient(self.bot, self.token)
-        self.updating = self.bot.loop.create_task(self.update_stats())
+        self.dblpy: DBLClient = DBLClient(self.client, self.token)
+        self.updating = self.client.loop.create_task(self.update_stats())
 
     async def update_stats(self):
-        while not self.bot.is_closed():
+        while not self.client.is_closed():
             try:
                 await self.dblpy.post_guild_count()
             except Exception as e:
@@ -30,8 +30,8 @@ class DiscordBotsOrgAPI(commands.Cog):
 class TRPGCog(commands.Cog):
     object_id = 115
     
-    def __init__(self, bot: commands.Bot):
-        self.bot: commands.Bot = bot
+    def __init__(self, client: commands.Bot):
+        self.client: commands.Bot = client
         
     @commands.command(name='초대링크', brief='봇을 초대하기 위한 링크를 확인합니다.',
                       help='봇을 서버에 초대하기 위해 필요한 링크를 확인합니다.')
@@ -40,7 +40,7 @@ class TRPGCog(commands.Cog):
         embed = Embed(title=':link: 봇 초대 링크', colour=Colour.blurple(),
                       description=f'봇을 다른 서버에 초대하려면 **[여기]({url})**를 클릭하세요.')
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
+        embed.set_thumbnail(url=self.client.user.avatar_url)
         await ctx.send(ctx.author.mention, embed=embed)
     
     @commands.command(name='도움말', aliases=('도움', 'h', 'help'), brief='명령어의 도움말을 확인합니다.',
@@ -53,7 +53,7 @@ class TRPGCog(commands.Cog):
                            '```\n'
                            f'봇이 어떤 명령어를 제공하는지 알고 싶다면 "{command_prefix}명령어" 명령어를 사용해보세요.')
     async def help(self, ctx: commands.Context, *tokens: str):
-        cmd: commands.Bot = self.bot
+        cmd: commands.Bot = self.client
         if tokens:
             for token in tokens:
                 if isinstance(cmd, commands.Bot) or isinstance(cmd, commands.Group):
@@ -66,11 +66,11 @@ class TRPGCog(commands.Cog):
         if cmd is None:
             await ctx.send(f'"{" ".join(tokens)}" 명령어를 찾을 수 없습니다.')
             return
-        help_embed = Embed(title=f'**{self.bot.command_prefix}'
+        help_embed = Embed(title=f'**{self.client.command_prefix}'
                                  f'{cmd.full_parent_name + " " if cmd.full_parent_name else ""}{cmd.name}**',
                            description=cmd.brief, colour=Colour.blurple())
         help_embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-        help_embed.set_thumbnail(url=self.bot.user.avatar_url)
+        help_embed.set_thumbnail(url=self.client.user.avatar_url)
         help_embed.add_field(name=':gear: 기능', value=cmd.help, inline=False)
         if cmd.aliases:
             help_embed.add_field(name=':asterisk: 대체 가능한 단어', value=', '.join([f'"{a}"' for a in cmd.aliases]),
@@ -78,7 +78,7 @@ class TRPGCog(commands.Cog):
         if isinstance(cmd, commands.Group):
             value = '이 명령어는 다음의 하위 명령어를 포함하고 있습니다.\n```\n'
             for subcommand in cmd.commands:
-                value += f'{self.bot.command_prefix}'
+                value += f'{self.client.command_prefix}'
                 value += f'{subcommand.full_parent_name + " " if subcommand.full_parent_name else ""}'
                 value += f'{subcommand.name}\n'
             value += '```'
@@ -89,8 +89,8 @@ class TRPGCog(commands.Cog):
                       help='봇이 제공하는 명령어들의 목록을 조회합니다.')
     async def cmd(self, ctx: commands.Context):
         cmds = [f'명령어 목록입니다.\n{"-" * 40}\n']
-        for cmd in self.bot.commands:
-            cmd_brief = f'**{self.bot.command_prefix}{f" {cmd.full_parent_name} " if cmd.full_parent_name else ""}'
+        for cmd in self.client.commands:
+            cmd_brief = f'**{self.client.command_prefix}{f" {cmd.full_parent_name} " if cmd.full_parent_name else ""}'
             cmd_brief += f'{cmd.name}**\n-- *{cmd.brief}*\n\n'
             if len(cmds) == 1 and len(cmds[-1] + cmd_brief) > 2048:
                 cmds.append(cmd_brief)
@@ -99,7 +99,7 @@ class TRPGCog(commands.Cog):
             else:
                 cmds[-1] += cmd_brief
         cmd_embed = Embed(title='명령어 목록', description=cmds.pop(0), colour=Colour.blurple())
-        cmd_embed.set_thumbnail(url=self.bot.user.avatar_url)
+        cmd_embed.set_thumbnail(url=self.client.user.avatar_url)
         cmd_embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         embeds = [cmd_embed]
         for cmd_brief in cmds:
@@ -181,7 +181,7 @@ class TRPGCog(commands.Cog):
         description += '\n= ***__' + str(sum(part['result'] for part in parts)) + '__***'
         embed = Embed(title=':game_die: 주사위 굴림', description=description, colour=Colour.blurple())
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
+        embed.set_thumbnail(url=self.client.user.avatar_url)
         await ctx.send(ctx.author.mention, embed=embed)
     
     @commands.command(name='개인방', aliases=('pc', 'pr', 'private', '비밀방'),
@@ -200,7 +200,7 @@ class TRPGCog(commands.Cog):
         msg = await ctx.send(f'{ctx.author.mention} 개인방을 만들고 있습니다...')
         try:
             overwrites = {ctx.guild.default_role: PermissionOverwrite(read_messages=False),
-                          self.bot.user: PermissionOverwrite(read_messages=True)}
+                          self.client.user: PermissionOverwrite(read_messages=True)}
             members = list(members)
             members.append(member)
             for member in members:
